@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../models/app_models.dart';
 import '../../models/user_profile.dart';
-// تأكد من صحة هذه المسارات في مشروعك
 import 'custom_drawer.dart';
-import '../doctor/dynamic_circle_painter.dart';
+// تم حذف import الـ DynamicCirclePainter القديم
 import 'profile_screen.dart';
 
 class SuperAdminScreen extends StatefulWidget {
@@ -38,7 +37,6 @@ class _SuperAdminScreenState extends State<SuperAdminScreen> {
     super.initState();
     _currentUser = widget.user;
 
-    // إصلاح: تمرير القيم كـ Named Parameters
     _currentStats = widget.initialStats ?? [
       StatCardData(value: 0, label: 'Occupied Beds'),
       StatCardData(value: 0, label: 'Available Beds'),
@@ -48,7 +46,6 @@ class _SuperAdminScreenState extends State<SuperAdminScreen> {
       StatCardData(value: 0, label: 'Total Requests'),
     ];
 
-    // إصلاح: إزالة const لأن البيانات ديناميكية واستخدام الـ Named Parameters
     _currentAgeGroups = widget.initialAgeGroups ?? [
       AgeGroupData(title: 'Newborns', range: '0-28 Days', count: 0, imagePath: 'assets/newborn(1).png'),
       AgeGroupData(title: 'Children', range: '1-12 Years', count: 0, imagePath: 'assets/children (1).png'),
@@ -94,7 +91,6 @@ class _SuperAdminScreenState extends State<SuperAdminScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFEDF3FF),
-      // تأكد أن CustomSideDrawer يقبل هذه البارامترات
       endDrawer: CustomSideDrawer(
         user: _currentUser,
         onUpdate: _handleUserUpdate,
@@ -253,4 +249,26 @@ class _SuperAdminScreenState extends State<SuperAdminScreen> {
   }
 
   Widget _buildNavItem(int i, IconData ic) => Expanded(child: GestureDetector(behavior: HitTestBehavior.opaque, onTap: () => setState(() => _selectedIndex = i), child: Opacity(opacity: _selectedIndex == i ? 0 : 1, child: Icon(ic, color: Colors.white, size: 28))));
+}
+
+// --- إضافة الكلاس هنا في نهاية الملف ---
+class DynamicCirclePainter extends CustomPainter {
+  final double xOffsetPercent;
+  DynamicCirclePainter({required this.xOffsetPercent});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    Paint p = Paint()..color = const Color(0xFF719EFF)..style = PaintingStyle.fill;
+    double r = 38;
+    double x = size.width * xOffsetPercent;
+    Path path = Path()
+      ..moveTo(0, 30)..lineTo(x - r - 10, 30)
+      ..quadraticBezierTo(x - r, 30, x - r, 30 - 5)
+      ..arcToPoint(Offset(x + r, 30 - 5), radius: Radius.circular(r), clockwise: false)
+      ..quadraticBezierTo(x + r, 30, x + r + 10, 30)
+      ..lineTo(size.width, 30)..lineTo(size.width, size.height)..lineTo(0, size.height)..close();
+    canvas.drawPath(path, p);
+  }
+  @override
+  bool shouldRepaint(DynamicCirclePainter old) => old.xOffsetPercent != xOffsetPercent;
 }
