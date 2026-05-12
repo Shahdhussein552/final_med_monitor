@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../models/patient_model.dart';
 import '../../models/app_models.dart';
-import '../../features/doctor/monitor_card.dart';
+// تأكدي من أن هذا المسار يشير إلى الملف الذي وضعتِ فيه كود MonitorScreen الاحترافي
+import '../../features/doctor/monitor_screen.dart';
 import '../../features/doctor/chat_screen.dart';
 import '../../features/doctor/patient_reports_screen.dart';
 import '../../features/doctor/personal_data_screen.dart';
@@ -104,10 +105,8 @@ class PatientDetailScreen extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: MonitorScreen(
-            bpm: patient.bpm,
-            brainActivity: patient.brainActivity,
-            respRate: patient.respRate),
+        // التعديل الأساسي هنا: نمرر كائن المريض كاملاً ليتوافق مع النسخة الاحترافية
+        child: MonitorScreen(patient: patient),
       ),
     );
   }
@@ -144,6 +143,7 @@ class PatientDetailScreen extends StatelessWidget {
       {
         'label': 'Tasks',
         'img': 'assets/tasks (1).png',
+        // هنا يتم توجيه الممرضة لمهامها الخاصة
         'page': const NurseTaskScreen(true),
       },
     ];
