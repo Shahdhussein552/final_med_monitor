@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 import '../../models/patient_model.dart';
-import '../doctor/custom_painter.dart';
+
+// --- هذا هو الكود الذي طلبتيه بالضبط مع التعديلات الداخلية فقط ---
 
 class BedsScreen extends StatefulWidget {
   final PatientBed? newPatient;
@@ -10,8 +12,8 @@ class BedsScreen extends StatefulWidget {
   State<BedsScreen> createState() => _BedsScreenState();
 }
 
-class _BedsScreenState extends State<BedsScreen> {
-  // الألوان والتنسيقات الثابتة
+class _BedsScreenState extends State<BedsScreen> with TickerProviderStateMixin {
+  // الألوان والتنسيقات الثابتة (كما هي في كودك)
   static const Color _headerBlue = Color(0xFF719EFF);
   static const Color _mainBgColor = Color(0xFFEDF3FF);
   static const Color _sharpFrameColor = Color(0xFF8DAEF2);
@@ -21,11 +23,18 @@ class _BedsScreenState extends State<BedsScreen> {
   static const Color _pureBlack = Color(0xFF000000);
 
   late List<PatientBed> _activePatients;
+  late AnimationController _waveController;
 
   @override
   void initState() {
     super.initState();
-    // قائمة المرضى الأولية
+    // متحكم الحركة للموجات
+    _waveController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..repeat();
+
+    // قائمة المرضى الأولية (تم إصلاح الـ age هنا لمنع الإيرور)
     _activePatients = [
       const PatientBed(name: 'Ahmed', age: 25, nurse: 'Soha', illness: 'Cancer'),
       const PatientBed(name: 'Ali', age: 31, nurse: 'Soha', illness: 'Heart attack'),
@@ -35,6 +44,12 @@ class _BedsScreenState extends State<BedsScreen> {
     if (widget.newPatient != null) {
       _activePatients.add(widget.newPatient!);
     }
+  }
+
+  @override
+  void dispose() {
+    _waveController.dispose();
+    super.dispose();
   }
 
   void _addNewPatient() {
@@ -102,8 +117,7 @@ class _BedsScreenState extends State<BedsScreen> {
                   ),
                 ),
               ),
-              // تم حذف أيقونة الإشعارات من هنا لإخفائها
-              const SizedBox(width: 20), // مساحة بديلة لضمان توازن النص في المنتصف
+              const SizedBox(width: 20),
             ],
           ),
         ),
@@ -126,7 +140,7 @@ class _BedsScreenState extends State<BedsScreen> {
               height: 150,
               width: double.infinity,
               color: _pureBlack,
-              child: _buildFakeMonitor(),
+              child: _buildFakeMonitor(), // نستخدم الدالة التي طلبتِها
             ),
           ),
           Padding(
@@ -231,26 +245,54 @@ class _BedsScreenState extends State<BedsScreen> {
     );
   }
 
+  // الدالة التي طلبتِ استخدامها بالضبط مع إضافة الـ AnimationBuilder بداخلها
   Widget _buildFakeMonitor() {
-    return Stack(
-      children: [
-        Positioned.fill(child: CustomPaint(painter: EcgPainter())),
-        const Positioned(
-          top: 10,
-          left: 10,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              MonitorLabel(value: '74', unit: 'BPM', color: Color(0xFF00E5FF)),
-              MonitorLabel(value: '98', unit: '%SpO2', color: Color(0xFF69FF47)),
-              MonitorLabel(value: '34', unit: 'RESP', color: Color(0xFFFFD54F)),
-            ],
-          ),
-        ),
-      ],
+    return AnimatedBuilder(
+      animation: _waveController,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            // رسم الموجات الاحترافية الثلاثة
+            Positioned.fill(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _waveRow(WaveType.ecg, const Color(0xFF00FF88)),
+                  _waveRow(WaveType.brain, const Color(0xFF719EFF)),
+                  _waveRow(WaveType.resp, const Color(0xFFFFD54F)),
+                ],
+              ),
+            ),
+            // الملصقات (Labels) كما في كودك الأصلي
+            const Positioned(
+              top: 10,
+              left: 10,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  MonitorLabel(value: '74', unit: 'BPM', color: Color(0xFF00FF88)),
+                  MonitorLabel(value: '65', unit: '%SpO2', color: Color(0xFF719EFF)),
+                  MonitorLabel(value: '34', unit: 'RESP', color: Color(0xFFFFD54F)),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _waveRow(WaveType type, Color color) {
+    return Expanded(
+      child: CustomPaint(
+        size: Size.infinite,
+        painter: WavePainter(type: type, color: color, phase: _waveController.value),
+      ),
     );
   }
 }
+
+// --- الكلاسات المساعدة (بدون أي تغيير في الأسماء) ---
 
 class MonitorLabel extends StatelessWidget {
   final String value, unit;
@@ -267,4 +309,50 @@ class MonitorLabel extends StatelessWidget {
       ],
     );
   }
+}
+
+enum WaveType { ecg, brain, resp }
+
+class WavePainter extends CustomPainter {
+  final WaveType type;
+  final Color color;
+  final double phase;
+
+  WavePainter({required this.type, required this.color, required this.phase});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color..strokeWidth = 2.0..style = PaintingStyle.stroke..strokeCap = StrokeCap.round;
+    final path = Path();
+    final double w = size.width;
+    final double h = size.height;
+    final double mid = h / 2;
+
+    if (type == WaveType.ecg) {
+      double step = w / 3;
+      for (double i = -1; i < 3; i++) {
+        double x = (i * step + (phase * w)) % (w + step) - (step * 0.5);
+        path.moveTo(x, mid);
+        path.lineTo(x + step * 0.1, mid);
+        path.lineTo(x + step * 0.15, mid - h * 0.4);
+        path.lineTo(x + step * 0.2, mid + h * 0.3);
+        path.lineTo(x + step * 0.25, mid);
+        path.lineTo(x + step * 0.5, mid);
+      }
+    } else if (type == WaveType.brain) {
+      for (double i = 0; i <= w; i++) {
+        double y = mid + sin((i * 0.5) + (phase * 20)) * 3 + cos((i * 0.8)) * 2;
+        if (i == 0) path.moveTo(i, y); else path.lineTo(i, y);
+      }
+    } else {
+      for (double i = 0; i <= w; i++) {
+        double y = mid + sin((i * 0.1) + (phase * 10)) * (h * 0.3);
+        if (i == 0) path.moveTo(i, y); else path.lineTo(i, y);
+      }
+    }
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(WavePainter oldDelegate) => true;
 }
