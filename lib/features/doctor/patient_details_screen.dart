@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../models/patient_model.dart';
 import '../../models/app_models.dart';
-import '../../features/doctor/monitor_card.dart';
+// تأكدي من مسار ملف MonitorScreen الصحيح في مشروعك
+import '../../features/doctor/monitor_screen.dart';
 import '../../features/doctor/chat_screen.dart';
 import '../../features/doctor/patient_reports_screen.dart';
 import '../../features/doctor/personal_data_screen.dart';
@@ -61,7 +62,7 @@ class PatientDetailScreen extends StatelessWidget {
               ),
               Expanded(
                 child: Center(
-                  child: FittedBox( // تعديل وقائي: يمنع تجاوز اسم المريض للحدود
+                  child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
                       patient.name,
@@ -93,7 +94,7 @@ class PatientDetailScreen extends StatelessWidget {
     return Container(
       height: 190,
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: Colors.black, // سيظهر التدرج اللوني فوق هذا اللون من كود MonitorScreen
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -105,10 +106,7 @@ class PatientDetailScreen extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: MonitorScreen(
-            bpm: patient.bpm,
-            brainActivity: patient.brainActivity,
-            respRate: patient.respRate),
+        child: MonitorScreen(patient: patient), // التعديل هنا: نمرر المريض بالكامل
       ),
     );
   }
@@ -187,7 +185,7 @@ class PatientDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Flexible( // تعديل وقائي: يمنع تجاوز النص لمساحة الزر
+                  Flexible(
                     flex: 2,
                     child: Text(
                       item['label'],
