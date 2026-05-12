@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants.dart';
 import '../../models/app_models.dart';
 import '../../models/user_profile.dart';
-import '../doctor/dynamic_circle_painter.dart';
+// تم حذف import الـ DynamicCirclePainter القديم
 import 'patient_form_screen.dart';
 import 'profile_screen.dart';
 
@@ -32,24 +32,15 @@ class _PendingAdmissionScreenState extends State<PendingAdmissionScreen> {
     _currentLocalUser = widget.user;
   }
 
-  // دالة لتحويل الوقت من الداتابيز إلى صيغة "منذ كذا دقيقة" مثل الصورة
   String formatTimeAgo(dynamic timeData) {
     if (timeData == null) return "Unknown time";
-
     try {
       DateTime sentTime = timeData is DateTime ? timeData : DateTime.parse(timeData.toString());
       final difference = DateTime.now().difference(sentTime);
-
-      if (difference.inMinutes < 60) {
-        return "${difference.inMinutes} min ago";
-      } else if (difference.inHours < 24) {
-        return "${difference.inHours} hours ago";
-      } else {
-        return "${difference.inDays} days ago";
-      }
-    } catch (e) {
-      return timeData.toString(); // في حال فشل التحويل يعرض النص القادم من API كما هو
-    }
+      if (difference.inMinutes < 60) return "${difference.inMinutes} min ago";
+      else if (difference.inHours < 24) return "${difference.inHours} hours ago";
+      else return "${difference.inDays} days ago";
+    } catch (e) { return timeData.toString(); }
   }
 
   @override
@@ -59,8 +50,7 @@ class _PendingAdmissionScreenState extends State<PendingAdmissionScreen> {
       appBar: _selectedIndex == 1 ? null : AppBar(
         backgroundColor: AppColors.primaryBlue,
         centerTitle: true,
-        elevation: 2, // ظل خفيف مثل الصورة
-        // جعل السهم والعنوان باللون الأبيض
+        elevation: 2,
         leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () => Navigator.pop(context)
@@ -102,34 +92,26 @@ class _PendingAdmissionScreenState extends State<PendingAdmissionScreen> {
     return GestureDetector(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (c) => PatientFormScreen(request: request))),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20), // زيادة الارتفاع ليشبه الصورة
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(25), // حواف دائرية أكثر مثل الصورة
+          borderRadius: BorderRadius.circular(25),
           border: Border.all(color: AppColors.primaryBlue.withOpacity(0.5), width: 1.5),
         ),
         child: Row(
           children: [
-            // اسم الدكتور (يسار)
             Expanded(
                 child: Text(
                     request.doctorName,
                     style: const TextStyle(color: AppColors.darkBlue, fontWeight: FontWeight.bold, fontSize: 16)
                 )
             ),
-            // بيانات الوقت والمريض (يمين)
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                    'Time Sent ${formatTimeAgo(request.timeSent)}', // الوقت هنا أصبح ديناميكياً
-                    style: const TextStyle(color: AppColors.textGrey, fontSize: 11)
-                ),
+                Text('Time Sent ${formatTimeAgo(request.timeSent)}', style: const TextStyle(color: AppColors.textGrey, fontSize: 11)),
                 const SizedBox(height: 4),
-                Text(
-                    'Patient Name \\ ${request.patientName}', // استخدام الباك سلاش كما في الصورة
-                    style: const TextStyle(color: AppColors.textGrey, fontSize: 11)
-                ),
+                Text('Patient Name \\ ${request.patientName}', style: const TextStyle(color: AppColors.textGrey, fontSize: 11)),
               ],
             ),
           ],
@@ -188,4 +170,26 @@ class _PendingAdmissionScreenState extends State<PendingAdmissionScreen> {
       ),
     ),
   );
+}
+
+// --- إضافة الكلاس هنا في نهاية الملف ---
+class DynamicCirclePainter extends CustomPainter {
+  final double xOffsetPercent;
+  DynamicCirclePainter({required this.xOffsetPercent});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    Paint p = Paint()..color = const Color(0xFF719EFF)..style = PaintingStyle.fill;
+    double r = 38;
+    double x = size.width * xOffsetPercent;
+    Path path = Path()
+      ..moveTo(0, 30)..lineTo(x - r - 10, 30)
+      ..quadraticBezierTo(x - r, 30, x - r, 30 - 5)
+      ..arcToPoint(Offset(x + r, 30 - 5), radius: Radius.circular(r), clockwise: false)
+      ..quadraticBezierTo(x + r, 30, x + r + 10, 30)
+      ..lineTo(size.width, 30)..lineTo(size.width, size.height)..lineTo(0, size.height)..close();
+    canvas.drawPath(path, p);
+  }
+  @override
+  bool shouldRepaint(DynamicCirclePainter old) => old.xOffsetPercent != xOffsetPercent;
 }
